@@ -1,0 +1,17 @@
+---
+counters:
+  - TOT_INS
+  - LD_INS
+  - BR_INS
+  - L1_TCM
+  - L2_TCM
+  - L3_TCM
+  - L1_ICM
+  - L2_ICM
+  - TOT_CYC
+  - STL_ICY
+
+functions:
+  - func1
+  - func2
+  - func3

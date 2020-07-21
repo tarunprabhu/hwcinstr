@@ -31,8 +31,13 @@ add_compile_options(-std=c++17 -Wall -Wextra -fPIC)
 set(CMAKE_BUILD_RPATH ${LLVM_LIBRARY_DIR} ${PAPI_LIBDIR})
 set(CMAKE_INSTALL_RPATH ${LLVM_LIBRARY_DIR} ${PAPI_LIBDIR})
 
+set(CMAKE_PROJECT_BINDIR "${PROJECT_BINARY_DIR}/bin")
 set(CMAKE_PROJECT_LIBDIR "${PROJECT_BINARY_DIR}/lib")
 
-# add_subdirectory(drivers)
+# Determine the Clang and GCC executables to use
+set(CLANG ${LLVM_TOOLS_BINARY_DIR}/clang)
+set(CLANGXX ${LLVM_TOOLS_BINARY_DIR}/clang++)
+
 add_subdirectory(cfe)
 add_subdirectory(rt)
+add_subdirectory(drivers)

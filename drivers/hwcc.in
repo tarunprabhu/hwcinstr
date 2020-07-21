@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+
+import argparse
+import os
+import sys
+
+
+def main():
+    ap = argparse.ArgumentParser('hwc instrument driver (C)')
+    ap.add_argument('--conf', type=str, default='',
+                    help='Path to the config file')
+    group = ap.add_mutually_exclusive_group()
+    group.add_argument('--clang', action='store_true', default=True,
+                       help='Use clang as the base compiler')
+    group.add_argument('--gcc', action='store_true',
+                       help='Use GCC as the base compiler')
+    known, rest = ap.parse_known_args()
+
+    bindir = os.path.dirname(__file__)
+    libdir = os.path.join(os.path.dirname(bindir), 'lib')
+
+    if known.clang:
+        compiler = '@CLANG@'
+        plugin = os.path.join(libdir, 'libHWCInstrClangPlugin.so')
+        rtlib = os.path.join(libdir, 'libHWCInstrRt.so')
+
+        args = ['-Xclang', '-load', '-Xclang', plugin]
+        if known.conf:
+            args.extend(['-Xclang', '-plugin-arg-hwcinstr', '-Xclang', '-conf',
+                         '-Xclang', '-plugin-arg-hwcinstr', '-Xclang', known.conf])
+
+        # FIXME: There are additional arguments that are used when dealing with
+        # Makefiles, but we won't deal with those for the moment
+        if not (('-E' in known) or ('-c' in known) or ('-S' in known)):
+            args.extend(['-Wl,-rpath=' + libdir, rtlib])
+
+        cmd_base = [compiler] + args + rest
+        cmd = ' '.join(cmd_base)
+        print(cmd)
+        return os.system(cmd)
+    elif known.gcc:
+        compiler = '@GCC@'
+        print('GCC not supported')
+        return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())

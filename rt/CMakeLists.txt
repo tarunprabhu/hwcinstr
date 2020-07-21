@@ -18,4 +18,5 @@ target_link_directories(${RT} PUBLIC ${PAPI_LIBDIR})
 target_link_libraries(${RT} ${PAPI_LIBRARIES})
 set_target_properties(${RT}
   PROPERTIES
-  SHARED_OUTPUT_DIRECTORY ${CMAKE_PROJECT_LIBDIR})
+  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_PROJECT_LIBDIR})
+install(TARGETS ${RT} LIBRARY DESTINATION lib)
