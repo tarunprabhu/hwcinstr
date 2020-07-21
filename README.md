@@ -26,10 +26,28 @@ be set to the appropriate directories
 # Usage
 
 hwcc and hwc++ are the drivers that can be found in /path/to/install/bin
-They can mostly be used as drop-in replacements of a regular compiler
+They can mostly be used as drop-in replacements of a regular compiler. 
+A config file must be specified that contains the names of the functions 
+to be JIT'ed and the hardware counters to collect. If no counters are specified 
+in the config file, the cumulative execution time and the number of occurences
+will be recorded. At runtime, the output file for the counters must be 
+specified using the HWCINSTR environment variable. If the file provided is "-",
+the output will be written to stdout. The time is measured in nanoseconds
+using C++11's chrono library.
 
 ```
 $ hwcc --conf /path/to/conf/file <regular compiler arguments>
+$ HWCINSTR=- ./a.out
+{
+  "functions": {
+    "9230498223143": {
+      "source": "func",
+      "Time": 309323,
+      "Occrs": 10,
+      "Total instructions": 19932
+    }
+  }
+}
 ```
 
 # Config file
