@@ -22,19 +22,21 @@ def main():
     if known.clang:
         compiler = '@CLANGXX@'
         plugin = os.path.join(libdir, 'libHWCInstrClangPlugin.so')
-        rtlib = os.path.join(libdir, 'libHWCInstrRt.so')
+        rtlib = 'HWCInstrRt'
 
         args = ['-Xclang', '-load', '-Xclang', plugin]
         if known.conf:
             args.extend(['-Xclang', '-plugin-arg-hwcinstr', '-Xclang', '-conf',
                          '-Xclang', '-plugin-arg-hwcinstr', '-Xclang', known.conf])
 
+        cmd_base = [compiler] + args + rest
         # FIXME: There are additional arguments that are used when dealing with
         # Makefiles, but we won't deal with those for the moment
         if not (('-E' in known) or ('-c' in known) or ('-S' in known)):
-            args.extend(['-Wl,-rpath=' + libdir, rtlib])
+            cmd_base.extend(['-Wl,-rpath=' + libdir,
+                             '-L' + libdir,
+                             '-l' + rtlib])
 
-        cmd_base = [compiler] + args + rest
         cmd = ' '.join(cmd_base)
         return os.system(cmd)
     elif known.gcc:
