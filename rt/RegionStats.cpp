@@ -31,10 +31,10 @@ std::ostream& RegionStats::print(std::ostream& os) const {
 
   if(file.length()) {
     if(startLine)
-      os << tab(3) << quote("start") << ": "
+      os << tab(3) << quote("Start") << ": "
          << quote(file + std::to_string(startLine)) << "\n";
     if(endLine)
-      os << tab(3) << quote("end") << ": "
+      os << tab(3) << quote("End") << ": "
          << quote(file + std::to_string(endLine)) << "\n";
   }
 

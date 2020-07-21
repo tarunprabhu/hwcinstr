@@ -66,8 +66,8 @@ int64_t Stats::getOccurs() const {
 }
 
 std::ostream& Stats::print(std::ostream& os) const {
-  os << tab(3) << quote("occurs") << ": " << occurs << ",\n";
-  os << tab(3) << quote("time") << ": " << time << ",\n";
+  os << tab(3) << quote("Occurs") << ": " << occurs << ",\n";
+  os << tab(3) << quote("Time") << ": " << time << ",\n";
 
   const PAPIContext& papiContext = rt.getPAPIContext();
   bool comma = false;
