@@ -29,19 +29,19 @@ static RTContext rt;
 
 extern "C" {
 
-void HWC_ENTER_FUNC(FunctionID id) {
+[[gnu::used]] void HWC_ENTER_FUNC(FunctionID id) {
   rt.getFunctionStats(id).start();
 }
 
-void HWC_EXIT_FUNC(FunctionID id) {
+[[gnu::used]] void HWC_EXIT_FUNC(FunctionID id) {
   rt.getFunctionStats(id).stop();
 }
 
-void HWC_ENTER_REGION(RegionID id) {
+[[gnu::used]] void HWC_ENTER_REGION(RegionID id) {
   rt.getRegionStats(id).start();
 }
 
-void HWC_EXIT_REGION(RegionID id) {
+[[gnu::used]] void HWC_EXIT_REGION(RegionID id) {
   rt.getRegionStats(id).stop();
 }
 
