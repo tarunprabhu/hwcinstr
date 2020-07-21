@@ -28,10 +28,10 @@ std::ostream& FunctionStats::print(std::ostream& os) const {
   os << tab(2) << quote(id) << ": {\n";
 
   if(srcName.length())
-    os << tab(3) << quote("source") << ": " << quote(srcName) << ",\n";
+    os << tab(3) << quote("Source") << ": " << quote(srcName) << ",\n";
 
   if(qualName.size())
-    os << tab(3) << quote("qualified") << ": " << quote(qualName) << ",\n";
+    os << tab(3) << quote("Qualified") << ": " << quote(qualName) << ",\n";
 
   Stats::print(os) << "\n";
   os << tab(2) << "}";

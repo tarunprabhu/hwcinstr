@@ -41,7 +41,6 @@ def main():
                              '-lstdc++'])
 
         cmd = ' '.join(cmd_base)
-        print(cmd)
         return os.system(cmd)
     elif known.gcc:
         compiler = '@GCC@'

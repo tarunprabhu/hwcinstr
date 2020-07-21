@@ -46,9 +46,13 @@ static IDType constructID(std::string s) {
 
   MD5(digest, s.length(), md5);
 
-  // Read the first 8 bytes of the 16 byte digest.
-  IDType id;
-  sscanf(reinterpret_cast<const char*>(md5), "%lu", &id);
+  // Read the 8 bytes of the 16 byte digest. Start somewhere in the middle for no
+  // good reason
+  IDType id = 0;
+  for(unsigned start = 3, i = start; i < start + 8; i++) {
+    id <<= 8;
+    id |= md5[i];
+  }
 
   return id;
 }

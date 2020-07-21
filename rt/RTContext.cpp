@@ -99,7 +99,7 @@ RegionStats& RTContext::getRegionStats(RegionID id) {
 std::ostream& RTContext::printFunctions(std::ostream& os) const {
   bool comma = false;
 
-  os << tab(1) << "functions: {\n";
+  os << tab(1) << quote("functions") << ": {\n";
   for(const auto& i : funcs) {
     if(comma)
       os << ",\n";
@@ -115,7 +115,7 @@ std::ostream& RTContext::printFunctions(std::ostream& os) const {
 std::ostream& RTContext::printRegions(std::ostream& os) const {
   bool comma = false;
 
-  os << tab(1) << "regions: {\n";
+  os << tab(1) << quote("regions") << ": {\n";
   for(const auto& i : regions) {
     if(comma)
       os << ",\n";
