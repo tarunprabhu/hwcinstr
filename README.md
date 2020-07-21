@@ -13,10 +13,12 @@ Clang + LLVM plugin to automatically add PAPI instrumentation to code
 It is not recommended to build in the source directory. One suggestion to build
 would be:
 
+```
 $ git clone git@github.com:tarunprabhu/hwcinstr.git
 $ mkdir build
 $ cd build
 $ cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_INSTALL_PREFIX=/path/to/install /path/to/hwcinstr
+```
 
 If clang, libyaml, PAPI etc. are in non-standard paths, CMAKE_PREFIX_PATH may
 be set to the appropriate directories
@@ -26,7 +28,9 @@ be set to the appropriate directories
 hwcc and hwc++ are the drivers that can be found in /path/to/install/bin
 They can mostly be used as drop-in replacements of a regular compiler
 
+```
 $ hwcc --conf /path/to/conf/file <regular compiler arguments>
+```
 
 # Config file
 
