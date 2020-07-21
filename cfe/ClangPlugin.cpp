@@ -32,62 +32,43 @@
 
 using namespace clang;
 
-// Everything will have been taken care of in the "fake" compile, but the
-// plugin still needs to return something valid from CreateASTConsumer
-class NullConsumer : public ASTConsumer {
-  ;
-};
-
-class HWCInstrAction : public PluginASTAction {
+// The consumer is a wrapper around a code generator which generates an
+// LLVM module. The functions in that module are then associated with the
+// Clang Decl's. The Decl's can't be kept around until the final LLVM module
+// is generated and instrumented because the ASTContext object containing the
+// Decl's will have been deleted by then. So everything has to be associated
+// after the translation unit has been handled by the code generator
+class Consumer : public ASTConsumer {
 protected:
-  virtual std::unique_ptr<ASTConsumer>
-  CreateASTConsumer(CompilerInstance& compiler, llvm::StringRef) override {
+  llvm::LLVMContext llvmContext;
+  CodeGenerator& cg;
+  std::unique_ptr<CodeGenerator> pcg;
+
+public:
+  explicit Consumer(CompilerInstance& compiler)
+      : cg(*CreateLLVMCodeGen(compiler.getDiagnostics(),
+                              "",
+                              compiler.getHeaderSearchOpts(),
+                              compiler.getPreprocessorOpts(),
+                              compiler.getCodeGenOpts(),
+                              llvmContext,
+                              nullptr)) {
+    pcg.reset(&cg);
+  }
+
+  virtual void HandleTranslationUnit(ASTContext& astContext) override {
+    cg.HandleTranslationUnit(astContext);
+
     CFEContext& cfeContext = CFEContext::getSingleton();
     const Conf& conf = cfeContext.getConf();
 
-    // This is the usual ridiculous hack that you have to do to associate the
-    // Clang AST structures with the LLVM IR. Essentially what this does is
-    // parses the AST and creates a temporary LLVM module. The functions in the
-    // module are then associated with a Decl. We have to do all this so we
-    // know which LLVM function to instrument in the subsequent passes.
-    // Doing it by demangling the function names is tricky because templated
-    // functions sometimes cause problems. The same is true for thunks although
-    // it is not clear that it even makes sense to try and instrument thunks
-    // one way or another
-    llvm::LLVMContext llvmContext;
-    CodeGenerator* cg(CreateLLVMCodeGen(compiler.getDiagnostics(),
-                                        "",
-                                        compiler.getHeaderSearchOpts(),
-                                        compiler.getPreprocessorOpts(),
-                                        compiler.getCodeGenOpts(),
-                                        llvmContext,
-                                        nullptr));
-
-    // Do this "fake" compile silently. If there are any compile errors, it
-    // will just do nothing
-    std::unique_ptr<DiagnosticConsumer> diagnosticsClient
-        = compiler.getDiagnostics().takeClient();
-    compiler.getDiagnostics().setClient(new clang::IgnoringDiagConsumer(),
-                                        true);
-
-    clang::Preprocessor& pp = compiler.getPreprocessor();
-    pp.getBuiltinInfo().initializeBuiltins(pp.getIdentifierTable(),
-                                           pp.getLangOpts());
-    compiler.setASTConsumer(std::unique_ptr<ASTConsumer>(cg));
-    compiler.createSema(getTranslationUnitKind(), nullptr);
-    compiler.getDiagnosticClient().BeginSourceFile(compiler.getLangOpts(), &pp);
-    ParseAST(compiler.getSema(),
-             compiler.getFrontendOpts().ShowStats,
-             compiler.getFrontendOpts().SkipFunctionBodies);
-    compiler.getDiagnosticClient().EndSourceFile();
-
-    // Before resetting the compiler state, collect everything that we need
-    // The llvm::Module will be nullptr if there was an error during parsing
-    if(llvm::Module* mod = cg->GetModule()) {
+    // If there was an error during code generation the llvm::Module will be
+    // null
+    if(llvm::Module* mod = cg.GetModule()) {
       for(llvm::Function& f : *mod) {
         const std::string& mangled = f.getName();
         if(auto* decl
-           = cast_or_null<FunctionDecl>(cg->GetDeclForMangledName(mangled))) {
+           = cast_or_null<FunctionDecl>(cg.GetDeclForMangledName(mangled))) {
           const std::string& srcName = decl->getNameAsString();
           const std::string& qualName = decl->getQualifiedNameAsString();
           if(f.size() and conf.has(srcName))
@@ -96,16 +77,59 @@ protected:
         }
       }
     }
+  }
 
-    // Reset compiler state and proceed as normal
-    // setASTConsumer(nullptr) will delete the CodeGenerator object created
-    compiler.takeSema();
-    compiler.setASTConsumer(nullptr);
-    compiler.createPreprocessor(getTranslationUnitKind());
-    compiler.createASTContext();
-    compiler.getDiagnostics().setClient(diagnosticsClient.release(), true);
+  virtual void Initialize(ASTContext& astContext) override {
+    return cg.Initialize(astContext);
+  }
 
-    return std::make_unique<NullConsumer>();
+  virtual bool HandleTopLevelDecl(DeclGroupRef g) override {
+    return cg.HandleTopLevelDecl(g);
+  }
+
+  virtual void HandleInlineFunctionDefinition(FunctionDecl* f) override {
+    return cg.HandleInlineFunctionDefinition(f);
+  }
+
+  virtual void HandleInterestingDecl(DeclGroupRef g) override {
+    return cg.HandleInterestingDecl(g);
+  }
+
+  virtual void HandleTagDeclDefinition(TagDecl* tag) override {
+    return cg.HandleTagDeclDefinition(tag);
+  }
+
+  virtual void HandleTagDeclRequiredDefinition(const TagDecl* tag) override {
+    return cg.HandleTagDeclRequiredDefinition(tag);
+  }
+
+  virtual void
+  HandleCXXImplicitFunctionInstantiation(FunctionDecl* f) override {
+    return cg.HandleCXXImplicitFunctionInstantiation(f);
+  }
+
+  virtual void CompleteTentativeDefinition(VarDecl* var) override {
+    return cg.CompleteTentativeDefinition(var);
+  }
+
+  virtual void AssignInheritanceModel(CXXRecordDecl* record) override {
+    return cg.AssignInheritanceModel(record);
+  }
+
+  virtual void HandleCXXStaticMemberVarInstantiation(VarDecl* var) override {
+    return cg.HandleCXXStaticMemberVarInstantiation(var);
+  }
+
+  virtual void HandleVTable(CXXRecordDecl* record) override {
+    return cg.HandleVTable(record);
+  }
+};
+
+class HWCInstrAction : public PluginASTAction {
+protected:
+  virtual std::unique_ptr<ASTConsumer>
+  CreateASTConsumer(CompilerInstance& compiler, llvm::StringRef) override {
+    return std::make_unique<Consumer>(compiler);
   }
 
   // Automatically run the plugin after the main AST action
@@ -147,25 +171,6 @@ protected:
         return false;
       }
     }
-    //   // Example error handling.
-    //   DiagnosticsEngine& D = CI.getDiagnostics();
-    //   if(args[i] == "-an-error") {
-    //     unsigned DiagID = D.getCustomDiagID(DiagnosticsEngine::Error,
-    //                                         "invalid argument '%0'");
-    //     D.Report(DiagID) << args[i];
-    //     return false;
-    //   } else if(args[i] == "-parse-template") {
-    //     if(i + 1 >= e) {
-    //       D.Report(D.getCustomDiagID(DiagnosticsEngine::Error,
-    //                                  "missing -parse-template argument"));
-    //       return false;
-    //     }
-    //     ++i;
-    //     ParsedTemplates.insert(args[i]);
-    //   }
-    // }
-    // if(!args.empty() && args[0] == "help")
-    //   PrintHelp(llvm::errs());
 
     return true;
   }
@@ -176,5 +181,3 @@ protected:
 
 static FrontendPluginRegistry::Add<HWCInstrAction>
     X("hwcinstr", "Instrument functions with PAPI");
-
-// static ParsedAttrInfoRegistry::Add<PAPIProfAttrInfo> X("papiprof", "");
