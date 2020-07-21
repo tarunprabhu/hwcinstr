@@ -6,7 +6,7 @@ import sys
 
 
 def main():
-    ap = argparse.ArgumentParser('hwc instrument driver (C)')
+    ap = argparse.ArgumentParser('hwc instrument driver (C++)')
     ap.add_argument('--conf', type=str, default='',
                     help='Path to the config file')
     group = ap.add_mutually_exclusive_group()
