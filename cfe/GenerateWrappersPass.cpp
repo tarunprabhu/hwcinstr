@@ -99,6 +99,7 @@ public:
     // The wrapper function is short and should probably get inlined anyway,
     // but just in case, force the issue. No reason to incur additional
     // function call overhead if it can be avoided
+    wrapper->removeFnAttr(Attribute::AttrKind::NoInline);
     wrapper->addFnAttr(Attribute::AttrKind::AlwaysInline);
 
     // Replace all uses of the old function with the new one. Do this first
