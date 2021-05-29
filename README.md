@@ -28,7 +28,7 @@ be set to the appropriate directories
 hwcc and hwc++ are the drivers that can be found in /path/to/install/bin
 They can mostly be used as drop-in replacements of a regular compiler. 
 A config file must be specified that contains the names of the functions 
-to be JIT'ed and the hardware counters to collect. If no counters are specified 
+to be instrumented and the hardware counters to collect. If no counters are specified 
 in the config file, the cumulative execution time and the number of occurences
 will be recorded. At runtime, the output file for the counters must be 
 specified using the HWCINSTR environment variable. If the file provided is "-",
